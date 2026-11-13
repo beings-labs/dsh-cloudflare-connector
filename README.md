@@ -114,7 +114,7 @@ scope list; reconnecting with the same invalid scope will not help.
 Pending consent blocks remote calls. To abandon a flow or reduce permissions,
 run `cloudflare_connector_clear` and authorize again with the desired configured scopes.
 Clear deletes local credentials; revoke the upstream grant in Cloudflare separately
-if needed.
+if needed. Clearing the connector does not sign you out of Cloudflare in your browser.
 
 ### Agent helper tools
 

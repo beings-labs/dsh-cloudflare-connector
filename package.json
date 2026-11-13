@@ -1,6 +1,6 @@
 {
   "name": "@beings-labs/dsh-cloudflare-connector",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shared Cloudflare access for DeepSeek Harness agents and plugins, using official MCP tools and browser OAuth.",
   "type": "module",
   "main": "index.js",
