@@ -1,0 +1,93 @@
+name: Publish to npm
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      dist-tag: ${{ steps.release.outputs.dist-tag }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Validate release metadata
+        id: release
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_PRERELEASE: ${{ github.event.release.prerelease }}
+          REPOSITORY: ${{ github.repository }}
+          REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          node --input-type=module <<'JS'
+          import { execFileSync } from 'node:child_process'
+          import { appendFileSync, readFileSync } from 'node:fs'
+
+          const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
+          const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'))
+          if (process.env.REPOSITORY !== 'beings-labs/dsh-cloudflare-connector') {
+            throw new Error('Publishing is restricted to beings-labs/dsh-cloudflare-connector')
+          }
+          if (process.env.REPOSITORY_PRIVATE !== 'false') {
+            throw new Error('The repository must be public before publishing with npm provenance')
+          }
+          if (pkg.name !== '@beings-labs/dsh-cloudflare-connector' || pkg.private === true || pkg.publishConfig?.access !== 'public') {
+            throw new Error('Expected the public @beings-labs/dsh-cloudflare-connector package')
+          }
+          if (pkg.repository?.url !== 'git+https://github.com/beings-labs/dsh-cloudflare-connector.git') {
+            throw new Error('Package repository metadata must match the GitHub repository')
+          }
+          if (process.env.RELEASE_TAG !== `v${pkg.version}`) {
+            throw new Error('Release tag must exactly match v<package.json version>')
+          }
+          if (lock.name !== pkg.name || lock.version !== pkg.version ||
+              lock.packages?.['']?.name !== pkg.name || lock.packages?.['']?.version !== pkg.version) {
+            throw new Error('package-lock.json name and version must match package.json')
+          }
+          const prerelease = pkg.version.split('+', 1)[0].includes('-')
+          if (process.env.RELEASE_PRERELEASE !== String(prerelease)) {
+            throw new Error('GitHub prerelease status must match the package version')
+          }
+          const [major, minor, patch] = execFileSync('npm', ['--version'], { encoding: 'utf8' }).trim().split('.').map(Number)
+          if (!(major > 11 || (major === 11 && (minor > 5 || (minor === 5 && patch >= 1))))) {
+            throw new Error('npm trusted publishing requires npm 11.5.1 or later')
+          }
+          appendFileSync(process.env.GITHUB_OUTPUT, `dist-tag=${prerelease ? 'next' : 'latest'}\n`)
+          JS
+      - run: npm ci
+      - run: npm run prepublishOnly
+
+  publish:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: Publish validated source with trusted publishing
+        env:
+          NPM_DIST_TAG: ${{ needs.validate.outputs.dist-tag }}
+        run: npm publish --access public --provenance --tag "$NPM_DIST_TAG" --ignore-scripts

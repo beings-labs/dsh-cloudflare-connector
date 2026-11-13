@@ -1,0 +1,3 @@
+- insert:
+    - id: beings-labs-cloudflare-connector
+      name: '@beings-labs/dsh-cloudflare-connector'

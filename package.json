@@ -1,0 +1,57 @@
+{
+  "name": "@beings-labs/dsh-cloudflare-connector",
+  "version": "0.1.0",
+  "description": "Shared Cloudflare access for DeepSeek Harness agents and plugins, using official MCP tools and browser OAuth.",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": { "types": "./index.d.ts", "default": "./index.js" },
+    "./package.json": "./package.json"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beings-labs/dsh-cloudflare-connector.git"
+  },
+  "homepage": "https://github.com/beings-labs/dsh-cloudflare-connector#readme",
+  "keywords": ["dsh", "dsh-plugin", "cloudflare", "connector", "mcp", "oauth", "cordis"],
+  "publishConfig": { "access": "public" },
+  "files": ["index.js", "index.d.ts", "lib/", "cordis.patch.yml", "README.md", "LICENSE"],
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.2.0 <0.3.0"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "check": "node --check index.js && node --check lib/store.js && node --check lib/oauth.js && node --check lib/connection.js && node --check lib/tools.js && node --check lib/service.js && node --check lib/errors.js && npm run test:types",
+    "test:types": "tsc --noEmit --strict --module NodeNext --target ES2022 test/public-api.ts",
+    "test:package": "node --test test/package.js",
+    "prepublishOnly": "npm test && npm run check && npm run test:package"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.4 || >=4.0.6-alpha.2 <5.0.0",
+    "@deepseek-ai/dsh": ">=0.2.0 <0.3.0",
+    "@deepseek-ai/dsh-tools": ">=0.2.2-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-host-webserver": ">=0.2.2-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-system-prompt": ">=0.2.2-rc.1 <0.3.0"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": { "optional": true },
+    "@deepseek-ai/dsh": { "optional": true },
+    "@deepseek-ai/dsh-tools": { "optional": true },
+    "@deepseek-ai/dsh-host-webserver": { "optional": true },
+    "@deepseek-ai/dsh-system-prompt": { "optional": true }
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}
