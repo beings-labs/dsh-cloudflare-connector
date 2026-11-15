@@ -1,5 +1,7 @@
 # @beings-labs/dsh-cloudflare-connector
 
+[![Listed on dsh-plugin.org](https://dsh-plugin.org/badges/listed.svg)](https://dsh-plugin.org/plugins/beings-labs/dsh-cloudflare-connector)
+
 **Cloudflare access for DeepSeek Harness agents and plugin developers.**
 Sign in through your browser, use the official MCP tools, or call a typed
 shared service from your own plugin. No Cloudflare API token to create or manage.
